@@ -1,50 +1,47 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import chainer
-import chainer.functions as F
-import chainer.links as L
+# import torch.nn
+# import torch.functional as F
+
+import torch.nn as nn
+import torch.nn.functional as F
 
 from collections import defaultdict
 import sys,random
 
-class Module(chainer.Chain):
+class Module(nn.Module):
 	def __init__(self, dim, dropout_rate, activate, isR, isBN):
-		super(Module, self).__init__()
+		super(Model, self).__init__()
 		with self.init_scope():
-			self.x2z	= L.Linear(dim,dim),
-			self.bn		= L.BatchNormalization(dim)
+			# self.x2z	= L.Linear(dim,dim),
+			# self.bn		= L.BatchNormalization(dim)
+
+			self.x2z = nn.Linear(dim, dim),
+			self.bn = nn.BatchNorm1d(dim)
+
 	def __call__(self, x):
-		if self.dropout_rate!=0:
-			x = F.dropout(x,ratio=self.dropout_rate)
+		if self.dropout_rate != 0:
+			x = F.dropout(x, p=self.dropout_rate)
+			
 		z = self.x2z(x)
+
 		if self.is_batchnorm:
 			z = self.bn(z)
-		if self.activate=='tanh': z = F.tanh(z)
-		if self.activate=='relu': z = F.relu(z)
-		if self.is_residual:	return z+x
-		else: return z
 
-class Module(chainer.Chain):
-	def __init__(self, dim, dropout_rate, activate, isR, isBN):
-		super(Module, self).__init__()
-		with self.init_scope():
-			self.x2z	= L.Linear(dim,dim),
-			self.bn		= L.BatchNormalization(dim)
-	def __call__(self, x):
-		if self.dropout_rate!=0:
-			x = F.dropout(x,ratio=self.dropout_rate)
-		z = self.x2z(x)
-		if self.is_batchnorm:
-			z = self.bn(z)
-		if self.activate=='tanh': z = F.tanh(z)
-		if self.activate=='relu': z = F.relu(z)
-		if self.is_residual:	return z+x
-		else: return z
+		if self.activate == 'tanh': 
+			z = F.tanh(z)
 
+		if self.activate == 'relu': 
+			z = F.relu(z)
 
+		if self.is_residual:
+			return z + x
 
-class Block(chainer.Chain):
+		else: 
+			return z
+
+class Block(nn.Module):
 	def __init__(self, dim, dropout_rate, activate, layer, isR, isBN):
 		super(Block, self).__init__()
 		links = [('m{}'.format(i), Module(dim,dropout_rate,activate, isR, isBN)) for i in range(layer)]
