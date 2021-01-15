@@ -2,8 +2,9 @@ import numpy, random
 from chainer import Variable
 
 class Backend:
-	def __init__(self,args):
+	def __init__(self, args):
 		self.is_gpu = args.use_gpu
+		
 		if args.use_gpu:
 			from chainer import cuda
 			import cupy
